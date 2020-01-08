@@ -35,3 +35,7 @@ QMK is developed and maintained by Jack Humbert of OLKB with contributions from 
 ## Official Website
 
 [qmk.fm](https://qmk.fm) is the official website of QMK, where you can find links to this page, the documentation, and the keyboards supported by QMK.
+
+# Flashing
+
+The only way I could flash my device was to run `make crkbd:default:avrdude` while it was plugged in (as per github foostan docs for corne-classic). Do this while the pro micro is plugged in, then press reset twice (may need to hold it down). Then when nothing apears to work, open qmk toolbox and it will see the pro micro. Then flash it with the hex file (which you already generated before with `make crkbd:default`).
