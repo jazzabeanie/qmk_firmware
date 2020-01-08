@@ -82,3 +82,10 @@ And in your `config.h` file, add the following:
 ```
 
 After this is done, you should be able to use the normal RGB keycodes, but you'll see the RGB Matrix effects in use, giving a much better experience. 
+
+## Jazzabeanie Keymap
+
+Modifications from default and justification:
+
+- Space and Enter keys switched - Space on right, Enter on left.
+  - I find myself normally hitting the Space key with my right thumb. I already have to adjust to the Enter key being on the thumb, so this minimises the number of adjustments I have to make. I can't see any reason why the Enter key should be on the right side. The only potential downside I can see is that it makes it slightly harder to type with only the left hand (when my right is on the mouse for example). This is not a big deal.
