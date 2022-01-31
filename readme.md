@@ -43,4 +43,4 @@ The only way I could flash my device was to run `make crkbd:default:avrdude` whi
 
 My first keyboard was a crkbd. My mapping is at https://github.com/jazzabeanie/qmk_firmware/tree/master/keyboards/crkbd/keymaps/jazzabeanie.
 
-My 2nd was the Keebio Iris.
+My 2nd was the Keebio Iris. Make this ready for flashing by holding the reset button when plugging it in.
