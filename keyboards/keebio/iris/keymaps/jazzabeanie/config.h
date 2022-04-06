@@ -20,4 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USE_I2C
 #define EE_HANDS
 
-// #define MIDI_ADVANCED // This is disabled because it makes the firmware
+// MIDI only works when NO_ACTION_MACRO and NO_ACTION_FUNCTION are defined as below. Also, must set `EXTRAFLAGS += -flto` in rules.mk. Otherwise, the firmware is too large.
+#define MIDI_ADVANCED
+
+#define NO_ACTION_MACRO
+#define NO_ACTION_FUNCTION
