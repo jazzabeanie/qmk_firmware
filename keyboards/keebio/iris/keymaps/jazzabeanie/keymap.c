@@ -25,7 +25,8 @@ const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}},
   {{0, 7}, {1, 7}, {2, 7}, {3, 7}, {4, 7}, {5, 7}},
   {{0, 8}, {1, 8}, {2, 8}, {3, 8}, {4, 8}, {5, 8}},
-  {{1, 1}, {1, 1}, {2, 9}, {3, 9}, {4, 9}}, // see ../../rev5/rev5.h for the matrix configuration.
+  {{1, 1}, {1, 1}, {2, 9}, {3, 9}, {4, 9}, {4, 9}}, // the last two keys are 4, 9 here. The first one doesn't matter because it is the swap key. the last one will swap LE6 for RE5 (so I can use the space key)
+  // see ../../rev5/rev5.h for the matrix configuration.
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -38,9 +39,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
      KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,      SH_MON,          SH_MON,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT,
+     KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,     KC_LGUI,          SH_MON,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    KC_LALT, LOWER,   KC_LGUI,                    KC_SPC,  RAISE,   KC_RALT
+                                    KC_LALT, LOWER,     SH_MON,                    KC_SPC,  RAISE,   KC_RALT
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   ),
 
