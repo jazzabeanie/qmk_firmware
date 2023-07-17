@@ -20,12 +20,17 @@ enum custom_keycodes {
 };
 
 const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
-  // TODO: insert the keymap to swap the other hand
+  // When the swap hands key is pressed, the next key will be put into this function by it's position. See ../../rev5/rev5.h for the index of each key. Left hand is rows 0 to 4 and right is 5-9. For columns zero is on the outside of each side. This function then returns the index (but reversed, so col, row) of the key that should be returned when swap-hands is enabled. see docs for more information: https://github.com/qmk/qmk_firmware/blob/master/docs/feature_swap_hands.md
   {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}},
   {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}},
   {{0, 7}, {1, 7}, {2, 7}, {3, 7}, {4, 7}, {5, 7}},
   {{0, 8}, {1, 8}, {2, 8}, {3, 8}, {4, 8}, {5, 8}},
-  {{1, 1}, {1, 1}, {2, 9}, {3, 9}, {4, 9}, {4, 9}}, // the last two keys are 4, 9 here. The first one doesn't matter because it is the swap key. the last one will swap LE6 for RE5 (so I can use the space key)
+  {{1, 1}, {1, 1}, {2, 9}, {3, 9}, {4, 9}, {4, 9}}, // the first two keys don't exist on my keyboard. the last two keys are 4, 9 here. The first one doesn't matter because it is the swap key. the last one will swap LE6 for RE5 (so I can use the space key)
+  {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}},
+  {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},
+  {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},
+  {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},
+  {{1, 1}, {1, 1}, {2, 4}, {3, 4}, {4, 9}, {4, 4}}, // First two keys don't exist. 2nd last (RE5) maps to itself so the hand swap key does nothing for this key. Last one doesnt matter because it is the hand swap key itself.
   // see ../../rev5/rev5.h for the matrix configuration.
 };
 
