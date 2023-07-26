@@ -30,7 +30,7 @@ const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},
   {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},
   {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},
-  {{1, 1}, {1, 1}, {2, 4}, {3, 4}, {4, 9}, {4, 4}}, // First two keys don't exist. 2nd last (RE5) maps to itself so the hand swap key does nothing for this key. Last one doesnt matter because it is the hand swap key itself.
+  {{1, 1}, {1, 1}, {4, 4}, {3, 4}, {4, 9}, {4, 4}}, // First two keys don't exist. The 3rd is mapped to LE6 which should be KC_LGUI so I can have both alt and GUI on both hands. The 2nd last (RE5) maps to itself so the hand swap key does nothing for this key. Last one doesnt matter because it is the hand swap key itself.
   // see ../../rev5/rev5.h for the matrix configuration.
 };
 
@@ -74,7 +74,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
      _______, _______, _______, _______, KC_PGDN, KC_MINS, KC_LPRN,          _______, KC_UNDS, KC_PLUS, KC_LBRC, KC_RBRC, KC_BSLS, KC_TILD,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                   _______, _______, _______
+                                    _______, _______, _______,                   KC_LEFT, _______, KC_RGHT
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   ),
 
