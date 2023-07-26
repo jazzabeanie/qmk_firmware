@@ -15,8 +15,6 @@ enum custom_keycodes {
   RAISE,
   ADJUST,
   ABLETON,
-  LEFT,
-  LEFT_LOWER,
 };
 
 const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
@@ -30,7 +28,7 @@ const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},
   {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},
   {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},
-  {{1, 1}, {1, 1}, {4, 4}, {3, 4}, {4, 9}, {4, 4}}, // First two keys don't exist. The 3rd is mapped to LE6 which should be KC_LGUI so I can have both alt and GUI on both hands. The 2nd last (RE5) maps to itself so the hand swap key does nothing for this key. Last one doesnt matter because it is the hand swap key itself.
+  {{1, 1}, {1, 1}, {5, 4}, {3, 4}, {4, 9}, {4, 4}}, // First two keys don't exist. The 3rd is mapped to LE6 which should be KC_LGUI so I can have both alt and GUI on both hands. The 2nd last (RE5) maps to itself so the hand swap key does nothing for this key. Last one doesnt matter because it is the hand swap key itself.
   // see ../../rev5/rev5.h for the matrix configuration.
 };
 
@@ -60,7 +58,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
      _______,  KC_F1,    KC_F2,   KC_F3,   KC_F4,   KC_F5, _______,          KC_F6,   KC_F7,  KC_P8,   KC_F9,    KC_F10,  KC_F11,   KC_F12,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                    KC_SPC,  _______, KC_P0
+                                    _______, _______, _______,                   _______,  _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   ),
 
@@ -104,38 +102,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
                                     _______, _______, _______,                   _______, _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
-  ),
-
-  [_LEFT] = LAYOUT( // lets the left hand do functions from the right hand. This may be redundant if I can get swap-hands working.
-  //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-     KC_BSPC,  KC_0,    KC_9,    KC_8,    KC_7,    KC_6,                               KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
-  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_LBRC,  KC_P,    KC_O,    KC_I,    KC_U,    KC_Y,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC,
-  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_QUOT, KC_SCLN,    KC_L,    KC_K,    KC_J,    KC_H,                               KC_H,    KC_J,    KC_K,    KC_L,  KC_SCLN, KC_QUOT,
-  //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_ENT, KC_SLSH,  KC_DOT,  KC_COMM,    KC_M,    KC_N,  LEFT_LOWER,        KC_END,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT,
-  //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______,   KC_SPC,                    KC_SPC,  RAISE,   KC_RALT
-                                // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
-  ),
-
-  [_LEFT_LOWER] = LAYOUT( // lets the left hand do LOWER functions from the right hand. This may be redundant if I can get swap-hands working.
-  //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-     KC_BSPC, KC_RPRN, KC_LPRN,  KC_ASTR, KC_AMPR, KC_CIRC,                            KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_BSPC,
-  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_BSPC, KC_0,    KC_9,    KC_8,    KC_7,    KC_6,                               KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
-  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_PIPE, KC_PLUS, KC_LEFT,   KC_UP, KC_DOWN,  KC_RGHT,                            KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_PLUS, KC_PIPE,
-  //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-       KC_F12, KC_F11,   KC_F10,   KC_F9,   KC_F8,   KC_F7,   KC_F6,          KC_F6,   KC_F7,  KC_P8,   KC_F9,    KC_F10,  KC_F11,   KC_F12,
-  //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                    KC_SPC,  _______, KC_P0
-                                // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
-
-// TODO: def hand_swap_config
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
@@ -170,14 +138,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         layer_on(_ADJUST);
       } else {
         layer_off(_ADJUST);
-      }
-      return false;
-      break;
-    case LEFT:
-      if (record->event.pressed) {
-        layer_on(_LEFT);
-      } else {
-        layer_off(_LEFT);
       }
       return false;
       break;
