@@ -79,13 +79,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_RAISE] = LAYOUT( \
   //,-----------------------------------------------------.                    ,-----------------------------------------------------.
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      MI_OCTU,  MI_A_4, MI_Bb_4,  MI_B_4,  MI_C_5, MI_CHU,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      MI_OCTU,  MI_B_3,  MI_C_4,  MI_Db_4, MI_D_4, MI_Eb_4,\
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      MI_OCTD,  MI_E_3,  MI_F_3, MI_Gb_3,  MI_G_3, MI_CHD,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      MI_OCTD,  MI_F_3, MI_Gb_3,  MI_G_3,  MI_A_3, MI_Bb_3, \
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
-      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      XXXXXXX,  MI_C_3, MI_Db_3,  MI_D_3, MI_Eb_3, XXXXXXX,\
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      XXXXXXX,  MI_C_3, MI_Db_3,  MI_D_3, MI_Eb_3,  MI_E_3,\
   //|--------+--------+--------+--------+--------+--------+--------|  |--------+--------+--------+--------+--------+--------+--------|
-                                          XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX,   TO(0), XXXXXXX \
+                                          XXXXXXX, XXXXXXX, XXXXXXX,    MI_CHU,   TO(0), MI_CHD \
                                       //`--------------------------'  `--------------------------'
   )
 };
