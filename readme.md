@@ -31,4 +31,9 @@ Setup according to https://docs.qmk.fm/#/newbs_building_firmware
 
 `qmk config user.keyboard=keebio/iris/rev5`
 `qmk config user.keymap=jazzabeanie`
+
+If you have already clone qmk_firmware to a location other than home, run:
+
+`qmk config user.qmk_home=/path/to/qmk_firmware`
+
 `qmk setup`
