@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "qmk_midi.h" // for midi_device and midi_send_cc()
 
 
 #define _QWERTY 0
@@ -15,6 +16,17 @@ enum custom_keycodes {
   RAISE,
   ADJUST,
   ABLETON,
+  // MIDI Control Change keys, used for the whole right hand of _ABLETON so those
+  // keys trigger actions in Ableton rather than playing notes. Each is named after
+  // the CC number it sends, so the keymap tells you what to look for when MIDI
+  // mapping. The numbering jumps from 31 to 102 because 20-31 and 102-119 are the
+  // two ranges the MIDI spec leaves undefined - anything else risks colliding with
+  // a standard controller such as mod wheel (1) or sustain (64). Keep CC_20 first
+  // and CC_115 last: process_record_user() relies on the two blocks being
+  // contiguous and in ascending order.
+  CC_20, CC_21, CC_22, CC_23, CC_24, CC_25, CC_26, CC_27, CC_28, CC_29, CC_30, CC_31,
+  CC_102, CC_103, CC_104, CC_105, CC_106, CC_107, CC_108, CC_109,
+  CC_110, CC_111, CC_112, CC_113, CC_114, CC_115,
 };
 
 const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
@@ -92,20 +104,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),    KC_K,    KC_O,    KC_L, _______, _______,                              MI_ON,  MI_C_5, MI_Db_5,  MI_D_5, MI_Eb_5, _______,
+       TO(0),    KC_K,    KC_O,    KC_L, _______, _______,                              MI_ON,   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_Y,    KC_H,    KC_U,    KC_J, _______,                             MI_OFF, MI_Ab_4,  MI_A_4, MI_Bb_4,  MI_B_4, _______,
+     _______,    KC_Y,    KC_H,    KC_U,    KC_J, _______,                             MI_OFF,   CC_25,   CC_26,   CC_27,   CC_28,   CC_29,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,                            MI_OCTU,  MI_E_4,  MI_F_4, MI_Gb_4,  MI_G_4,_______,
+     _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,                              CC_30,   CC_31,  CC_102,  CC_103,  CC_104,  CC_105,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,          _______, MI_OCTD,  MI_C_4, MI_Db_4,  MI_D_4, MI_Eb_4,  _______,
+     _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,           CC_106,  CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                   _______, _______, _______
+                                    _______, _______, _______,                    CC_113,  CC_114,  CC_115
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  if (keycode >= CC_20 && keycode <= CC_115) {
+    // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
+    // MIDI map the key as either a momentary or a toggle control.
+    uint8_t cc = (keycode <= CC_31) ? 20 + (keycode - CC_20) : 102 + (keycode - CC_102);
+    midi_send_cc(&midi_device, midi_config.channel, cc, record->event.pressed ? 127 : 0);
+    return false;
+  }
+
   switch (keycode) {
     case QWERTY:
       if (record->event.pressed) {
