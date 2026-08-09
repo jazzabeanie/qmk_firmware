@@ -26,3 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // NO_ACTION_FUNCTION used to be needed here too, but upstream removed both -
 // they are no longer recognised and the space they saved is gone anyway.
 #define MIDI_ADVANCED
+
+// MIDI only ever reaches the half that has the USB cable, but the CC keys the
+// DAW lights up are all on the right hand. This transaction carries the LED
+// state to the other half so the feedback works whichever half is plugged in.
+// The payload is 26 bytes, comfortably inside the 32-byte RPC_M2S_BUFFER_SIZE,
+// so it goes across in a single transaction.
+// Guarded so rev5, which has no rgb_matrix and so no feedback code, does not
+// pay ~126 bytes for RPC machinery nothing registers a handler for.
+#ifdef RGB_MATRIX_ENABLE
+#    define SPLIT_TRANSACTION_IDS_USER CC_FEEDBACK_SYNC
+#endif

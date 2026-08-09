@@ -1,7 +1,8 @@
 // Copyright 2026 Jared Johnston (@jazzabeanie)
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include QMK_KEYBOARD_H
-#include "qmk_midi.h" // for midi_device and midi_send_cc()
+#include "qmk_midi.h"    // for midi_device and midi_send_cc()
+#include "transactions.h" // for the split RPC that syncs LED state between halves
 
 
 // This keymap lives in the shared iris/keymaps directory, so it builds for any
@@ -206,8 +207,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  * Remote Scripts usually send Note On with velocity-as-colour rather than CC.
  * ------------------------------------------------------------------------- */
 
-// Latest value the DAW sent for each CC key. 0 means off.
+// Latest value the DAW sent for each CC key. 0 means off. Written by the MIDI
+// callbacks on the master and by the split handler on the slave.
 static volatile uint8_t cc_state[CC_COUNT];
+
+// Set when cc_state changes so housekeeping only pushes it across the split
+// link when there is something to say. Sending every cycle would add latency
+// to the matrix scan for no benefit.
+static volatile bool cc_dirty = false;
 
 // Which LED sits under each CC key, resolved once from the keymap at startup
 // so moving a CC key moves its light with it. NO_LED means unmapped.
@@ -221,7 +228,10 @@ static int8_t cc_index_for(uint8_t num) {
 
 static void cc_feedback_set(uint8_t num, uint8_t val) {
   int8_t i = cc_index_for(num);
-  if (i >= 0) cc_state[i] = val;
+  if (i >= 0 && cc_state[i] != val) {
+    cc_state[i] = val;
+    cc_dirty = true;
+  }
 }
 
 // Channel is deliberately ignored. If a Remote Script ever uses one channel
@@ -239,6 +249,30 @@ static void midi_noteoff_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8
   cc_feedback_set(num, 0);
 }
 
+// Runs on the half without the USB cable. The master owns the state; this side
+// just takes what it is given.
+static void cc_sync_slave_handler(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+  if (in_len == CC_COUNT) {
+    memcpy((void *)cc_state, in_data, CC_COUNT);
+  }
+}
+
+// Push the state to the other half when it changes. Only the master initiates.
+void housekeeping_task_user(void) {
+  if (!is_keyboard_master() || !cc_dirty) return;
+
+  // Take a snapshot first: a MIDI callback can land between the copy and the
+  // send, and clearing the flag before sending means such an update is not
+  // lost - it just sets the flag again and goes out on the next tick.
+  uint8_t snapshot[CC_COUNT];
+  cc_dirty = false;
+  memcpy(snapshot, (const void *)cc_state, CC_COUNT);
+
+  if (!transaction_rpc_send(CC_FEEDBACK_SYNC, CC_COUNT, snapshot)) {
+    cc_dirty = true; // link was busy, try again next tick
+  }
+}
+
 void keyboard_post_init_user(void) {
   for (uint8_t i = 0; i < CC_COUNT; i++) {
     cc_led[i] = NO_LED;
@@ -251,6 +285,10 @@ void keyboard_post_init_user(void) {
       }
     }
   }
+
+  // Both halves register: either one can end up being the slave depending on
+  // which side the cable is in.
+  transaction_register_rpc(CC_FEEDBACK_SYNC, cc_sync_slave_handler);
 
   // Safe to register here: protocol_pre_init() has already run setup_midi(),
   // so midi_device_init() will not clear these back out.
