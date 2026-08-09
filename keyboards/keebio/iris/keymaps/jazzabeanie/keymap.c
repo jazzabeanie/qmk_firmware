@@ -4,6 +4,18 @@
 #include "qmk_midi.h" // for midi_device and midi_send_cc()
 
 
+// This keymap lives in the shared iris/keymaps directory, so it builds for any
+// revision with the 56-key LAYOUT. rev8 (RP2040) drives its LEDs with rgb_matrix
+// while rev5 (atmega32u4) uses rgblight, and each has its own keycodes - the
+// wrong family compiles fine but the keys silently do nothing.
+#ifdef RGB_MATRIX_ENABLE
+#    define JZ_RGBT RM_TOGG
+#    define JZ_RGBN RM_NEXT
+#else
+#    define JZ_RGBT UG_TOGG
+#    define JZ_RGBN UG_NEXT
+#endif
+
 #define _QWERTY 0
 #define _LOWER 1
 #define _RAISE 2
@@ -94,7 +106,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
      _______, _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______, _______, _______, _______, UG_NEXT, UG_TOGG,                            _______, _______, _______, _______, KC_PSCR, _______,
+     _______, _______, _______, _______, JZ_RGBN, JZ_RGBT,                            _______, _______, _______, _______, KC_PSCR, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
      _______,   TO(4), KC_MPRV, KC_VOLU, KC_VOLD, KC_MNXT,                            KC_HOME, KC_PGDN, KC_PGUP,  KC_END, _______, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
