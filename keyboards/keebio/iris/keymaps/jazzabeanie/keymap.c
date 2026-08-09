@@ -43,6 +43,17 @@ enum custom_keycodes {
   CC_110, CC_111, CC_112, CC_113, CC_114, CC_115,
 };
 
+// The 26 CC_* keycodes are contiguous, so a keycode doubles as an index:
+// 0-11 are CC 20-31 and 12-25 are CC 102-115. The gap in the CC numbers is
+// deliberate (see above); the indices stay dense so they can be used as an
+// array subscript.
+#define CC_COUNT (CC_115 - CC_20 + 1)
+
+static uint8_t cc_number_for(uint16_t keycode) {
+  uint8_t i = keycode - CC_20;
+  return (i < 12) ? 20 + i : 102 + (i - 12);
+}
+
 const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   // When the swap hands key is pressed, the next key will be put into this function by it's position. See ../../rev5/rev5.h for the index of each key. Left hand is rows 0 to 4 and right is 5-9. For columns zero is on the outside of each side. This function then returns the index (but reversed, so col, row) of the key that should be returned when swap-hands is enabled. see docs for more information: https://github.com/qmk/qmk_firmware/blob/master/docs/feature_swap_hands.md
   {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}},
@@ -135,8 +146,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (keycode >= CC_20 && keycode <= CC_115) {
     // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
     // MIDI map the key as either a momentary or a toggle control.
-    uint8_t cc = (keycode <= CC_31) ? 20 + (keycode - CC_20) : 102 + (keycode - CC_102);
-    midi_send_cc(&midi_device, midi_config.channel, cc, record->event.pressed ? 127 : 0);
+    midi_send_cc(&midi_device, midi_config.channel, cc_number_for(keycode), record->event.pressed ? 127 : 0);
     return false;
   }
 
@@ -178,3 +188,89 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
   return true;
 }
+
+#ifdef RGB_MATRIX_ENABLE
+/* -------------------------------------------------------------------------
+ * DAW -> keyboard LED feedback.
+ *
+ * Whatever the DAW sends back on the same numbers the CC keys send out lights
+ * the key that sends it, turning the right hand into a status display.
+ *
+ * The raw value is stored rather than a single on/off bit. A plain MIDI clip
+ * or Max for Live device will only ever send 0 and 127, but a Control Surface
+ * script conventionally encodes state (clip stopped / playing / queued /
+ * recording) in the value, Launchpad style. Keeping the byte means switching
+ * to that later is a change to this file's colour logic only, not its shape.
+ *
+ * Notes are accepted alongside CCs for the same reason: grid-controller
+ * Remote Scripts usually send Note On with velocity-as-colour rather than CC.
+ * ------------------------------------------------------------------------- */
+
+// Latest value the DAW sent for each CC key. 0 means off.
+static volatile uint8_t cc_state[CC_COUNT];
+
+// Which LED sits under each CC key, resolved once from the keymap at startup
+// so moving a CC key moves its light with it. NO_LED means unmapped.
+static uint8_t cc_led[CC_COUNT];
+
+static int8_t cc_index_for(uint8_t num) {
+  if (num >= 20 && num <= 31) return num - 20;
+  if (num >= 102 && num <= 115) return 12 + (num - 102);
+  return -1;
+}
+
+static void cc_feedback_set(uint8_t num, uint8_t val) {
+  int8_t i = cc_index_for(num);
+  if (i >= 0) cc_state[i] = val;
+}
+
+// Channel is deliberately ignored. If a Remote Script ever uses one channel
+// per track, this is the only place that needs to learn about it.
+static void midi_cc_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t val) {
+  cc_feedback_set(num, val);
+}
+
+// A Note On with velocity 0 means note-off, which lands as "off" for free.
+static void midi_noteon_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
+  cc_feedback_set(num, vel);
+}
+
+static void midi_noteoff_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
+  cc_feedback_set(num, 0);
+}
+
+void keyboard_post_init_user(void) {
+  for (uint8_t i = 0; i < CC_COUNT; i++) {
+    cc_led[i] = NO_LED;
+  }
+  for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+    for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+      uint16_t keycode = keymap_key_to_keycode(_ABLETON, (keypos_t){.row = row, .col = col});
+      if (keycode >= CC_20 && keycode <= CC_115) {
+        cc_led[keycode - CC_20] = g_led_config.matrix_co[row][col];
+      }
+    }
+  }
+
+  // Safe to register here: protocol_pre_init() has already run setup_midi(),
+  // so midi_device_init() will not clear these back out.
+  midi_register_cc_callback(&midi_device, midi_cc_in);
+  midi_register_noteon_callback(&midi_device, midi_noteon_in);
+  midi_register_noteoff_callback(&midi_device, midi_noteoff_in);
+}
+
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+  for (uint8_t i = 0; i < CC_COUNT; i++) {
+    uint8_t val = cc_state[i];
+    if (val == 0) continue;
+
+    uint8_t led = cc_led[i];
+    if (led == NO_LED || led < led_min || led >= led_max) continue;
+
+    // Value drives brightness, so a plain 127 is full green and a small
+    // state index still shows up dimly instead of vanishing.
+    rgb_matrix_set_color(led, 0, (val >= 127) ? 255 : val * 2, 0);
+  }
+  return false;
+}
+#endif // RGB_MATRIX_ENABLE
