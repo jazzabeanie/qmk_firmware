@@ -1,0 +1,3 @@
+MIDI_ENABLE = yes
+LTO_ENABLE = yes
+SWAP_HANDS_ENABLE = yes
