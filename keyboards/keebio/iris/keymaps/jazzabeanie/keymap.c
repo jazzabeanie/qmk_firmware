@@ -298,6 +298,17 @@ void keyboard_post_init_user(void) {
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+  // On the Ableton layer, blank whatever effect is running so the only lit key
+  // is one the DAW asked for - if something glows, it came over MIDI. Done by
+  // painting black here rather than switching the matrix off, because the
+  // indicator pass only runs while rgb_matrix is enabled, and this leaves the
+  // chosen mode and brightness untouched for every other layer.
+  if (layer_state_is(_ABLETON)) {
+    for (uint8_t i = led_min; i < led_max; i++) {
+      rgb_matrix_set_color(i, 0, 0, 0);
+    }
+  }
+
   for (uint8_t i = 0; i < CC_COUNT; i++) {
     uint8_t val = cc_state[i];
     if (val == 0) continue;
@@ -305,9 +316,12 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     uint8_t led = cc_led[i];
     if (led == NO_LED || led < led_min || led >= led_max) continue;
 
-    // Value drives brightness, so a plain 127 is full green and a small
-    // state index still shows up dimly instead of vanishing.
-    rgb_matrix_set_color(led, 0, (val >= 127) ? 255 : val * 2, 0);
+    // Floor the brightness so any non-zero value is unmistakably visible. A
+    // script sending 0/127 gets off/full green; one sending small palette
+    // indices (1=green, 2=blink, ...) still shows clearly instead of sitting
+    // at brightness 2 and looking like the feedback is broken.
+    uint8_t level = (val >= 127) ? 255 : (val < 16 ? 128 : val * 2);
+    rgb_matrix_set_color(led, 0, level, 0);
   }
   return false;
 }
