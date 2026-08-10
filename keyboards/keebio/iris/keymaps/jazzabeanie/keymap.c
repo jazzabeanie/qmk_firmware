@@ -31,6 +31,10 @@ enum custom_keycodes {
   RAISE,
   ADJUST,
   ABLETON,
+  // Blanks every DAW feedback LED. A manual way back to a dark right hand when
+  // a script quits without sending its zeroes, and the only clear that works
+  // from any layer.
+  CC_CLR,
   // MIDI Control Change keys, used for the right hand of _ABLETON so those keys
   // trigger actions in Ableton rather than playing notes. Each is named after
   // the CC number it sends, so the keymap tells you what to look for when MIDI
@@ -134,7 +138,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // thumb is left transparent (base layer RAISE) rather than sending a CC.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),    KC_K,    KC_O,    KC_L, _______, _______,                              CC_20,   CC_21,   CC_22,   CC_23,   CC_24,   CC_25,
+       TO(0),    KC_K,    KC_O,    KC_L, _______,  CC_CLR,                              CC_20,   CC_21,   CC_22,   CC_23,   CC_24,   CC_25,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
      _______,    KC_Y,    KC_H,    KC_U,    KC_J, _______,                              CC_26,   CC_27,   CC_28,   CC_29,   CC_30,   CC_31,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
@@ -147,7 +151,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   )
 };
 
+#ifdef RGB_MATRIX_ENABLE
+// Defined with the rest of the feedback code at the bottom of this file.
+static void cc_feedback_clear_all(void);
+#endif
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  if (keycode == CC_CLR) {
+#ifdef RGB_MATRIX_ENABLE
+    if (record->event.pressed) {
+      cc_feedback_clear_all();
+    }
+#endif
+    // Swallowed either way, so the key stays inert on rev5 rather than falling
+    // through to whatever the layer below it has.
+    return false;
+  }
+
   if (keycode >= CC_20 && keycode <= CC_116) {
     // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
     // MIDI map the key as either a momentary or a toggle control.
