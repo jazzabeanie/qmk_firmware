@@ -135,21 +135,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   ),
 
-  // The right hand is numbered straight through in reading order - across each
-  // row, top to bottom, then the thumbs - so the CC number tells you where the
-  // key is. 20-31 covers the top two rows and 102-116 the rest. The middle right
-  // thumb is left transparent (base layer RAISE) rather than sending a CC.
+  // The CC keys fill the left hand, numbered straight through in reading order -
+  // across each row, top to bottom, then the thumbs - so the CC number still
+  // tells you where the key is. TO(0) keeps the top left corner, which leaves
+  // five CC keys on the top row and six, six, seven and three below it. That is
+  // 27 keys in 28 slots, an exact fit with nothing spare.
+  //
+  // The right hand carries the Ableton letter shortcuts that used to be on the
+  // left, each one on the matching key of the other half. Note that the left
+  // thumbs are now all CC keys, so LOWER cannot be reached from this layer and
+  // neither can _ADJUST - leave with TO(0) first to get at the RGB controls.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),    KC_K,    KC_O,    KC_L, _______,  CC_CLR,                              CC_20,   CC_21,   CC_22,   CC_23,   CC_24,   CC_25,
+       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,    KC_K,    KC_O,    KC_L, _______,  CC_CLR,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_Y,    KC_H,    KC_U,    KC_J,  CC_DBG,                              CC_26,   CC_27,   CC_28,   CC_29,   CC_30,   CC_31,
+       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,    KC_Y,    KC_H,    KC_U,    KC_J,  CC_DBG,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,                             CC_102,  CC_103,  CC_104,  CC_105,  CC_106,  CC_107,
+       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,           CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,  CC_114,
+      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                    CC_115, _______,  CC_116
+                                    CC_114,  CC_115,  CC_116,                   _______, _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
