@@ -31,24 +31,24 @@ enum custom_keycodes {
   RAISE,
   ADJUST,
   ABLETON,
-  // MIDI Control Change keys, used for the whole right hand of _ABLETON so those
-  // keys trigger actions in Ableton rather than playing notes. Each is named after
+  // MIDI Control Change keys, used for the right hand of _ABLETON so those keys
+  // trigger actions in Ableton rather than playing notes. Each is named after
   // the CC number it sends, so the keymap tells you what to look for when MIDI
   // mapping. The numbering jumps from 31 to 102 because 20-31 and 102-119 are the
   // two ranges the MIDI spec leaves undefined - anything else risks colliding with
   // a standard controller such as mod wheel (1) or sustain (64). Keep CC_20 first
-  // and CC_115 last: process_record_user() relies on the two blocks being
+  // and CC_116 last: process_record_user() relies on the two blocks being
   // contiguous and in ascending order.
   CC_20, CC_21, CC_22, CC_23, CC_24, CC_25, CC_26, CC_27, CC_28, CC_29, CC_30, CC_31,
   CC_102, CC_103, CC_104, CC_105, CC_106, CC_107, CC_108, CC_109,
-  CC_110, CC_111, CC_112, CC_113, CC_114, CC_115,
+  CC_110, CC_111, CC_112, CC_113, CC_114, CC_115, CC_116,
 };
 
-// The 26 CC_* keycodes are contiguous, so a keycode doubles as an index:
-// 0-11 are CC 20-31 and 12-25 are CC 102-115. The gap in the CC numbers is
+// The 27 CC_* keycodes are contiguous, so a keycode doubles as an index:
+// 0-11 are CC 20-31 and 12-26 are CC 102-116. The gap in the CC numbers is
 // deliberate (see above); the indices stay dense so they can be used as an
 // array subscript.
-#define CC_COUNT (CC_115 - CC_20 + 1)
+#define CC_COUNT (CC_116 - CC_20 + 1)
 
 static uint8_t cc_number_for(uint16_t keycode) {
   uint8_t i = keycode - CC_20;
@@ -128,41 +128,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   ),
 
+  // The right hand is numbered straight through in reading order - across each
+  // row, top to bottom, then the thumbs - so the CC number tells you where the
+  // key is. 20-31 covers the top two rows and 102-116 the rest. The middle right
+  // thumb is left transparent (base layer RAISE) rather than sending a CC.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),    KC_K,    KC_O,    KC_L, _______, _______,                              MI_ON,   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,
+       TO(0),    KC_K,    KC_O,    KC_L, _______, _______,                              CC_20,   CC_21,   CC_22,   CC_23,   CC_24,   CC_25,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_Y,    KC_H,    KC_U,    KC_J, _______,                             MI_OFF,   CC_25,   CC_26,   CC_27,   CC_28,   CC_29,
+     _______,    KC_Y,    KC_H,    KC_U,    KC_J, _______,                              CC_26,   CC_27,   CC_28,   CC_29,   CC_30,   CC_31,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,                              CC_30,   CC_31,  CC_102,  CC_103,  CC_104,  CC_105,
+     _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,                             CC_102,  CC_103,  CC_104,  CC_105,  CC_106,  CC_107,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,           CC_106,  CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,
+     _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,           CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,  CC_114,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    _______, _______, _______,                    CC_113,  CC_114,  CC_115
+                                    _______, _______, _______,                    CC_115, _______,  CC_116
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
 
-#ifdef RGB_MATRIX_ENABLE
-// Defined with the rest of the feedback code at the bottom of this file.
-static void cc_feedback_clear_all(void);
-#endif
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-#ifdef RGB_MATRIX_ENABLE
-  // MI_ON / MI_OFF have no effect of their own in this build: the code behind
-  // them lives in process_music.c, which is compiled out unless MIDI_BASIC or
-  // audio is enabled, and neither is. So give them a job - either one wipes the
-  // feedback state, making MI_OFF then MI_ON a manual "clear all". Without it a
-  // key lit by a script that quit or crashed before sending its 0 stays lit
-  // until the board is unplugged. Falls through rather than returning, so if
-  // MIDI_BASIC is ever switched on the real midi_on()/midi_off() still run.
-  if ((keycode == MI_ON || keycode == MI_OFF || keycode == MI_TOGG) && record->event.pressed) {
-    cc_feedback_clear_all();
-  }
-#endif
-
-  if (keycode >= CC_20 && keycode <= CC_115) {
+  if (keycode >= CC_20 && keycode <= CC_116) {
     // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
     // MIDI map the key as either a momentary or a toggle control.
     midi_send_cc(&midi_device, midi_config.channel, cc_number_for(keycode), record->event.pressed ? 127 : 0);
@@ -240,7 +226,7 @@ static uint8_t cc_led[CC_COUNT];
 
 static int8_t cc_index_for(uint8_t num) {
   if (num >= 20 && num <= 31) return num - 20;
-  if (num >= 102 && num <= 115) return 12 + (num - 102);
+  if (num >= 102 && num <= 116) return 12 + (num - 102);
   return -1;
 }
 
@@ -252,14 +238,30 @@ static void cc_feedback_set(uint8_t num, uint8_t val) {
   }
 }
 
-// Wipe every stored value, so the whole right hand goes dark. Bound to the
-// MI_OFF / MI_ON keys above.
+// Wipe every stored value, so the whole right hand goes dark.
 static void cc_feedback_clear_all(void) {
   memset((void *)cc_state, 0, CC_COUNT);
   // Marked dirty unconditionally rather than only on a real change: a dropped
   // transaction would leave the other half lit with state this one no longer
-  // has, so this doubles as a "resync the halves" button.
+  // has, so this doubles as a resync.
   cc_dirty = true;
+}
+
+// Clear on the way out of the Ableton layer. This took over from the MI_OFF /
+// MI_ON keys, which were inert - the code behind them lives in process_music.c,
+// compiled out unless MIDI_BASIC or audio is enabled - and have since been
+// replaced by CC keys. Doing it on exit means nothing the DAW lit is left
+// glowing while you type normally, and the layer always starts dark, so
+// anything alight really did come from MIDI. It also recovers from a script
+// that quit without sending its zeroes.
+layer_state_t layer_state_set_user(layer_state_t state) {
+  static bool in_ableton = false;
+  bool now = layer_state_cmp(state, _ABLETON);
+  if (in_ableton && !now) {
+    cc_feedback_clear_all();
+  }
+  in_ableton = now;
+  return state;
 }
 
 // Channel is deliberately ignored. If a Remote Script ever uses one channel
@@ -308,7 +310,7 @@ void keyboard_post_init_user(void) {
   for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {
       uint16_t keycode = keymap_key_to_keycode(_ABLETON, (keypos_t){.row = row, .col = col});
-      if (keycode >= CC_20 && keycode <= CC_115) {
+      if (keycode >= CC_20 && keycode <= CC_116) {
         cc_led[keycode - CC_20] = g_led_config.matrix_co[row][col];
       }
     }
