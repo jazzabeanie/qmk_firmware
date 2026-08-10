@@ -143,7 +143,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   )
 };
 
+#ifdef RGB_MATRIX_ENABLE
+// Defined with the rest of the feedback code at the bottom of this file.
+static void cc_feedback_clear_all(void);
+#endif
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+#ifdef RGB_MATRIX_ENABLE
+  // MI_ON / MI_OFF have no effect of their own in this build: the code behind
+  // them lives in process_music.c, which is compiled out unless MIDI_BASIC or
+  // audio is enabled, and neither is. So give them a job - either one wipes the
+  // feedback state, making MI_OFF then MI_ON a manual "clear all". Without it a
+  // key lit by a script that quit or crashed before sending its 0 stays lit
+  // until the board is unplugged. Falls through rather than returning, so if
+  // MIDI_BASIC is ever switched on the real midi_on()/midi_off() still run.
+  if ((keycode == MI_ON || keycode == MI_OFF || keycode == MI_TOGG) && record->event.pressed) {
+    cc_feedback_clear_all();
+  }
+#endif
+
   if (keycode >= CC_20 && keycode <= CC_115) {
     // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
     // MIDI map the key as either a momentary or a toggle control.
@@ -232,6 +250,16 @@ static void cc_feedback_set(uint8_t num, uint8_t val) {
     cc_state[i] = val;
     cc_dirty = true;
   }
+}
+
+// Wipe every stored value, so the whole right hand goes dark. Bound to the
+// MI_OFF / MI_ON keys above.
+static void cc_feedback_clear_all(void) {
+  memset((void *)cc_state, 0, CC_COUNT);
+  // Marked dirty unconditionally rather than only on a real change: a dropped
+  // transaction would leave the other half lit with state this one no longer
+  // has, so this doubles as a "resync the halves" button.
+  cc_dirty = true;
 }
 
 // Channel is deliberately ignored. If a Remote Script ever uses one channel
