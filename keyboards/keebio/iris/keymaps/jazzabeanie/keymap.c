@@ -54,13 +54,13 @@ enum custom_keycodes {
   // are named by letter and depend on a separate octave setting, which makes
   // the keymap say nothing useful about what a DAW will see.
   //
-  // 36 is the bottom of a standard drum rack, and the range stops well clear of
-  // 20-31 and 102-116. That matters: midi_noteon_in() reads an incoming note
-  // number through cc_index_for(), so notes inside those ranges would light the
-  // CC keys by mistake. Keep NT_36 first and NT_51 last - process_record_user()
-  // relies on the block being contiguous and in ascending order.
-  NT_36, NT_37, NT_38, NT_39, NT_40, NT_41, NT_42, NT_43,
-  NT_44, NT_45, NT_46, NT_47, NT_48, NT_49, NT_50, NT_51,
+  // Keep NT_35 first and NT_55 last - process_record_user() relies on the block
+  // being contiguous and in ascending order. The grid repeats three of these
+  // numbers on two keys each, which is what makes the layout isomorphic; the
+  // keycodes themselves stay one per note.
+  NT_35, NT_36, NT_37, NT_38, NT_39, NT_40, NT_41,
+  NT_42, NT_43, NT_44, NT_45, NT_46, NT_47, NT_48,
+  NT_49, NT_50, NT_51, NT_52, NT_53, NT_54, NT_55,
   // Shift the whole note grid by an octave. Must stay outside the block above,
   // which is range checked. QMK's MI_OCTU / MI_OCTD are no use here: they move
   // midi_config.octave, which only the MI_* keycodes read.
@@ -78,9 +78,9 @@ static uint8_t cc_number_for(uint16_t keycode) {
   return (i < 12) ? 20 + i : 102 + (i - 12);
 }
 
-// The note grid: NT_36 sends this number and each keycode after it adds one.
-#define NT_BASE 36
-#define NT_COUNT (NT_51 - NT_36 + 1)
+// The note grid: NT_35 sends this number and each keycode after it adds one.
+#define NT_BASE 35
+#define NT_COUNT (NT_55 - NT_35 + 1)
 
 // The furthest the grid can shift and still keep every note inside 0-127.
 #define NT_OCT_MIN (-(NT_BASE / 12))
@@ -173,29 +173,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // five CC keys on the top row and six, six, seven and three below it. That is
   // 27 keys in 28 slots, an exact fit with nothing spare.
   //
-  // The right hand sends MIDI notes 36 to 51 as a 4x4 grid. It starts at NT_36
-  // on the M key and counts to the right, then steps up a row - so the grid
-  // rises from the bottom left, the same way a clip grid is usually drawn. The
-  // row 3 column offset is because that row carries an extra inner key, which
-  // puts M under J rather than under H.
+  // The right hand is an isomorphic note grid, notes 35 to 55. Each row climbs
+  // in semitones, and each row above starts a perfect fourth - five semitones -
+  // higher, so the last key of a row sounds the same note as the first key of
+  // the row above. That is the layout a Push or a Launchpad in fourths uses: a
+  // chord or scale shape keeps the same shape wherever you move it.
   //
-  // N shifts the grid down an octave and H shifts it up, between 12 below and
-  // 72 above the printed numbers.
+  // The outer right thumbs shift the whole grid by an octave, down on the inner
+  // one and up on the outer, between 24 below and 72 above the printed numbers.
   //
   // Notes and CCs are separate kinds of message, so these numbers cannot
   // collide with the CC numbers on the left hand.
   //
-  // The right thumb holds _ABLETON_RAISE instead of falling through to the base
-  // RAISE, which is where the housekeeping keys now live.
+  // The middle right thumb holds _ABLETON_RAISE instead of falling through to
+  // the base RAISE, which is where the housekeeping keys now live.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,   NT_48,   NT_49,   NT_50,   NT_51, _______,
+       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                              NT_50,   NT_51,   NT_52,   NT_53,   NT_54,   NT_55,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,   NT_44,   NT_45,   NT_46,   NT_47, _______,
+       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                              NT_45,   NT_46,   NT_47,   NT_48,   NT_49,   NT_50,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            _______,   NT_40,   NT_41,   NT_42,   NT_43, _______,
+       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                              NT_40,   NT_41,   NT_42,   NT_43,   NT_44,   NT_45,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______, _______,   NT_36,   NT_37,   NT_38,   NT_39, _______,
+      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______,   NT_35,   NT_36,   NT_37,   NT_38,   NT_39,   NT_40,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
                                     CC_114, _______,  CC_115,                   NT_OCTD, MO(_ABLETON_RAISE), NT_OCTU
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
@@ -255,8 +255,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return false;
   }
 
-  if (keycode >= NT_36 && keycode <= NT_51) {
-    uint8_t i = keycode - NT_36;
+  if (keycode >= NT_35 && keycode <= NT_55) {
+    uint8_t i = keycode - NT_35;
     if (record->event.pressed) {
       // Full velocity on press and a note off on release, so a DAW sees an
       // ordinary held note. Velocity is fixed rather than taken from
@@ -316,20 +316,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
  * DAW -> keyboard LED feedback.
  *
  * Whatever the DAW sends back on the same numbers the CC keys send out lights
- * the key that sends it, turning the right hand into a status display.
+ * the key that sends it, turning the left hand into a status display.
  *
- * The raw value is stored rather than a single on/off bit. A plain MIDI clip
- * or Max for Live device will only ever send 0 and 127, but a Control Surface
- * script conventionally encodes state (clip stopped / playing / queued /
- * recording) in the value, Launchpad style. Keeping the byte means switching
- * to that later is a change to this file's colour logic only, not its shape.
- *
- * Notes are accepted alongside CCs for the same reason: grid-controller
- * Remote Scripts usually send Note On with velocity-as-colour rather than CC.
+ * The raw value is stored rather than a single on/off bit. Loopy Pro only ever
+ * sends 0 and 127, but a Control Surface script conventionally encodes state
+ * (clip stopped / playing / queued / recording) in the value, Launchpad style.
+ * Keeping the byte means switching to that later is a change to this file's
+ * colour logic only, not its shape.
  * ------------------------------------------------------------------------- */
 
 // Latest value the DAW sent for each CC key. 0 means off. Written by the MIDI
-// callbacks on the master and by the split handler on the slave.
+// callback on the master and by the split handler on the slave.
 static volatile uint8_t cc_state[CC_COUNT];
 
 // Set when cc_state changes so housekeeping only pushes it across the split
@@ -389,14 +386,18 @@ static void midi_cc_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t va
   cc_feedback_set(num, val);
 }
 
-// A Note On with velocity 0 means note-off, which lands as "off" for free.
-static void midi_noteon_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
-  cc_feedback_set(num, vel);
-}
-
-static void midi_noteoff_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
-  cc_feedback_set(num, 0);
-}
+/* Incoming notes are deliberately not accepted as feedback.
+ *
+ * They used to be, because a grid-controller Remote Script often sends Note On
+ * with velocity-as-colour rather than CC. That only worked while the note keys
+ * sat clear of the CC numbers. The grid now spans 35-55 and the octave keys
+ * move it as far as 11-31 and 107-127, which lands inside both 20-31 and
+ * 102-116 at five of the nine octave positions.
+ *
+ * cc_index_for() cannot tell a note number from a CC number, so a note the DAW
+ * echoed back would light an unrelated CC key on the left hand. Feedback comes
+ * from Control Change only, which is what Loopy Pro sends anyway.
+ */
 
 // Runs on the half without the USB cable. The master owns the state; this side
 // just takes what it is given.
@@ -442,8 +443,6 @@ void keyboard_post_init_user(void) {
   // Safe to register here: protocol_pre_init() has already run setup_midi(),
   // so midi_device_init() will not clear these back out.
   midi_register_cc_callback(&midi_device, midi_cc_in);
-  midi_register_noteon_callback(&midi_device, midi_noteon_in);
-  midi_register_noteoff_callback(&midi_device, midi_noteoff_in);
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
