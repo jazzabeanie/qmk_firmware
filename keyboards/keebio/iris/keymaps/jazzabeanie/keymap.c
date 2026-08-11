@@ -22,8 +22,9 @@
 #define _RAISE 2
 #define _ADJUST 3
 #define _ABLETON 4
-#define _LEFT 5
-#define _LEFT_LOWER 6
+// Reached by holding the right thumb RAISE key while on _ABLETON. Must sit
+// above _ABLETON, or the layer below would win and the key would do nothing.
+#define _ABLETON_RAISE 5
 
 enum custom_keycodes {
   QWERTY = SAFE_RANGE,
@@ -35,9 +36,6 @@ enum custom_keycodes {
   // a script quits without sending its zeroes, and the only clear that works
   // from any layer.
   CC_CLR,
-  // Cycles the feedback display between normal green, value-as-hue and
-  // channel-as-hue, to find out what a DAW is actually sending.
-  CC_DBG,
   // MIDI Control Change keys, used for the right hand of _ABLETON so those keys
   // trigger actions in Ableton rather than playing notes. Each is named after
   // the CC number it sends, so the keymap tells you what to look for when MIDI
@@ -186,45 +184,55 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //
   // Notes and CCs are separate kinds of message, so these numbers cannot
   // collide with the CC numbers on the left hand.
+  //
+  // The right thumb holds _ABLETON_RAISE instead of falling through to the base
+  // RAISE, which is where the housekeeping keys now live.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,   NT_48,   NT_49,   NT_50,   NT_51,  CC_CLR,
+       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,   NT_48,   NT_49,   NT_50,   NT_51, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,   NT_44,   NT_45,   NT_46,   NT_47,  CC_DBG,
+       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,   NT_44,   NT_45,   NT_46,   NT_47, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            NT_OCTU,   NT_40,   NT_41,   NT_42,   NT_43, _______,
+       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            _______,   NT_40,   NT_41,   NT_42,   NT_43, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______, NT_OCTD,   NT_36,   NT_37,   NT_38,   NT_39, _______,
+      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______, _______,   NT_36,   NT_37,   NT_38,   NT_39, _______,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    CC_114, _______,  CC_115,                   _______, _______, _______
+                                    CC_114, _______,  CC_115,                   NT_OCTD, MO(_ABLETON_RAISE), NT_OCTU
+                                // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
+  ),
+
+  // Held with the right thumb from _ABLETON. Everything is transparent except
+  // the housekeeping keys, so the CC keys and the note grid keep working while
+  // it is held. CC_CLR keeps the Backspace key it had on _ABLETON.
+  [_ABLETON_RAISE] = LAYOUT(
+  //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
+     _______, _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______,  CC_CLR,
+  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
+     _______, _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______, _______,
+  //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
+     _______, _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______, _______,
+  //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
+     _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______,
+  //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
+                                   _______, _______, _______,                   _______, _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
 
 #ifdef RGB_MATRIX_ENABLE
-// Both defined with the rest of the feedback code at the bottom of this file.
+// Defined with the rest of the feedback code at the bottom of this file.
 static void cc_feedback_clear_all(void);
-static void cc_debug_cycle(void);
 #endif
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  // Both are swallowed whatever the revision, so they stay inert on rev5 rather
-  // than falling through to whatever the layer below them has.
   if (keycode == CC_CLR) {
 #ifdef RGB_MATRIX_ENABLE
     if (record->event.pressed) {
       cc_feedback_clear_all();
     }
 #endif
-    return false;
-  }
-
-  if (keycode == CC_DBG) {
-#ifdef RGB_MATRIX_ENABLE
-    if (record->event.pressed) {
-      cc_debug_cycle();
-    }
-#endif
+    // Swallowed whatever the revision, so the key stays inert on rev5 rather
+    // than falling through to whatever the layer below it has.
     return false;
   }
 
@@ -333,45 +341,16 @@ static volatile bool cc_dirty = false;
 // so moving a CC key moves its light with it. NO_LED means unmapped.
 static uint8_t cc_led[CC_COUNT];
 
-// The LED under CC_DBG, so the key can report which mode it has selected.
-static uint8_t cc_dbg_led = NO_LED;
-
-/* Diagnostic display modes, cycled by CC_DBG.
- *
- * The normal display throws away everything except "is it non-zero", and paints
- * a hardcoded green, so it cannot tell you what a DAW is really sending. These
- * modes put the raw bytes on the keys as hue instead.
- *
- * CHANNEL mode exists because colour is often carried on a separate channel
- * from state - that is how the MIDI Fighter Twister's rings are driven - and
- * midi_cc_in() otherwise discards the channel without looking at it. */
-enum {
-  CC_DEBUG_OFF = 0, // green, brightness from the value
-  CC_DEBUG_VALUE,   // hue from the value byte
-  CC_DEBUG_CHANNEL, // hue from the channel the message arrived on
-  CC_DEBUG_MODES,
-};
-static uint8_t cc_debug = CC_DEBUG_OFF;
-
 static int8_t cc_index_for(uint8_t num) {
   if (num >= 20 && num <= 31) return num - 20;
   if (num >= 102 && num <= 116) return 12 + (num - 102);
   return -1;
 }
 
-static void cc_feedback_set(uint8_t chan, uint8_t num, uint8_t val) {
+static void cc_feedback_set(uint8_t num, uint8_t val) {
   int8_t i = cc_index_for(num);
-  if (i < 0) return;
-
-  // In channel mode the byte carries the channel rather than the value, which
-  // keeps one array and one split transaction covering both diagnostics - the
-  // payload is already sized to the 32-byte RPC buffer and a second array would
-  // not fit. Stored as chan+1 so channel 0 is still distinguishable from "off",
-  // and a zero value still reads as off so keys go dark on release as usual.
-  uint8_t stored = (cc_debug == CC_DEBUG_CHANNEL && val != 0) ? chan + 1 : val;
-
-  if (cc_state[i] != stored) {
-    cc_state[i] = stored;
+  if (i >= 0 && cc_state[i] != val) {
+    cc_state[i] = val;
     cc_dirty = true;
   }
 }
@@ -383,14 +362,6 @@ static void cc_feedback_clear_all(void) {
   // transaction would leave the other half lit with state this one no longer
   // has, so this doubles as a resync.
   cc_dirty = true;
-}
-
-// Cycle the diagnostic display. The stored byte means something different in
-// each mode, so anything already on screen would be misread - clear it and let
-// the DAW repopulate under the new meaning.
-static void cc_debug_cycle(void) {
-  cc_debug = (cc_debug + 1) % CC_DEBUG_MODES;
-  cc_feedback_clear_all();
 }
 
 // Clear on the way out of the Ableton layer. This took over from the MI_OFF /
@@ -410,19 +381,21 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   return state;
 }
 
-// The channel is passed through but only CC_DEBUG_CHANNEL looks at it. Normal
-// display still merges every channel onto the same key.
+// Channel is deliberately ignored, so every channel merges onto the same key.
+// Loopy Pro sends its feedback on channel 1 with value 127, and a diagnostic
+// build confirmed it never varies either one. If a DAW ever does use the
+// channel to carry state, this is the only place that needs to learn about it.
 static void midi_cc_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t val) {
-  cc_feedback_set(chan, num, val);
+  cc_feedback_set(num, val);
 }
 
 // A Note On with velocity 0 means note-off, which lands as "off" for free.
 static void midi_noteon_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
-  cc_feedback_set(chan, num, vel);
+  cc_feedback_set(num, vel);
 }
 
 static void midi_noteoff_in(MidiDevice *device, uint8_t chan, uint8_t num, uint8_t vel) {
-  cc_feedback_set(chan, num, 0);
+  cc_feedback_set(num, 0);
 }
 
 // Runs on the half without the USB cable. The master owns the state; this side
@@ -458,8 +431,6 @@ void keyboard_post_init_user(void) {
       uint16_t keycode = keymap_key_to_keycode(_ABLETON, (keypos_t){.row = row, .col = col});
       if (keycode >= CC_20 && keycode <= CC_116) {
         cc_led[keycode - CC_20] = g_led_config.matrix_co[row][col];
-      } else if (keycode == CC_DBG) {
-        cc_dbg_led = g_led_config.matrix_co[row][col];
       }
     }
   }
@@ -494,32 +465,16 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     uint8_t led = cc_led[i];
     if (led == NO_LED || led < led_min || led >= led_max) continue;
 
-    if (cc_debug == CC_DEBUG_OFF) {
-      // Floor the brightness so any non-zero value is unmistakably visible. A
-      // script sending 0/127 gets off/full green; one sending small palette
-      // indices (1=green, 2=blink, ...) still shows clearly instead of sitting
-      // at brightness 2 and looking like the feedback is broken.
-      uint8_t level = (val >= 127) ? 255 : (val < 16 ? 128 : val * 2);
-      rgb_matrix_set_color(led, 0, level, 0);
-    } else {
-      // Spread the byte over red -> green -> blue -> magenta and stop short of
-      // wrapping back to red, so two different bytes never share a hue. Values
-      // run 0-127 over 16 steps of hue each; channels are stored as 1-16 and
-      // get a sixteenth of the wheel apiece.
-      uint8_t hue = (cc_debug == CC_DEBUG_VALUE) ? (uint8_t)((val * 3) / 2) : (uint8_t)((val - 1) * 15);
-      RGB rgb = hsv_to_rgb((HSV){hue, 255, 255});
-      rgb_matrix_set_color(led, rgb.r, rgb.g, rgb.b);
-    }
-  }
-
-  // Report the selected mode on the CC_DBG key itself, since with the layer
-  // blanked there is otherwise nothing to say which one is active.
-  if (cc_debug != CC_DEBUG_OFF && cc_dbg_led != NO_LED && cc_dbg_led >= led_min && cc_dbg_led < led_max) {
-    if (cc_debug == CC_DEBUG_VALUE) {
-      rgb_matrix_set_color(cc_dbg_led, 64, 64, 64); // dim white: showing values
-    } else {
-      rgb_matrix_set_color(cc_dbg_led, 64, 0, 64); // dim magenta: showing channels
-    }
+    // Green, with the brightness floored so any non-zero value is unmistakably
+    // visible. A DAW sending 0/127 gets off/full green; one sending small
+    // palette indices (1=green, 2=blink, ...) still shows clearly instead of
+    // sitting at brightness 2 and looking like the feedback is broken.
+    //
+    // Hue is not used to carry the value. A diagnostic build showed Loopy Pro
+    // sends 127 on channel 1 for every clip, so there is nothing for a colour
+    // to say - the data is on or off and green states it plainly.
+    uint8_t level = (val >= 127) ? 255 : (val < 16 ? 128 : val * 2);
+    rgb_matrix_set_color(led, 0, level, 0);
   }
   return false;
 }
