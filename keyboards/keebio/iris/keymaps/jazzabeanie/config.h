@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MIDI_ADVANCED
 
 // MIDI only ever reaches the half that has the USB cable, but the CC keys the
-// DAW lights up are all on the right hand. This transaction carries the LED
+// DAW lights up are all on the left hand. This transaction carries the LED
 // state to the other half so the feedback works whichever half is plugged in.
 // The payload is 27 bytes, comfortably inside the 32-byte RPC_M2S_BUFFER_SIZE,
 // so it goes across in a single transaction.
@@ -36,6 +36,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // pay ~126 bytes for RPC machinery nothing registers a handler for.
 #ifdef RGB_MATRIX_ENABLE
 #    define SPLIT_TRANSACTION_IDS_USER CC_FEEDBACK_SYNC
+
+// Send the layer state to the other half as well. QMK does not do this by
+// default: the slave scans its matrix and hands the result to the master, which
+// owns all the layer logic, so the slave's own layer_state never changes.
+//
+// rgb_matrix_indicators_advanced_user() runs on BOTH halves though, each over
+// its own LEDs. Without this the slave reads layer_state as 0, decides it is
+// not on _ABLETON, and keeps painting the running effect - so one half blanks
+// and the other stays lit.
+#    define SPLIT_LAYER_STATE_ENABLE
 #endif
 
 // rev8's keyboard.json turns on 43 animations, which makes RM_NEXT a 44-step
