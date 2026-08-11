@@ -49,6 +49,24 @@ enum custom_keycodes {
   CC_20, CC_21, CC_22, CC_23, CC_24, CC_25, CC_26, CC_27, CC_28, CC_29, CC_30, CC_31,
   CC_102, CC_103, CC_104, CC_105, CC_106, CC_107, CC_108, CC_109,
   CC_110, CC_111, CC_112, CC_113, CC_114, CC_115, CC_116,
+  // MIDI Note keys, used for the right hand of _ABLETON. A note is only ever a
+  // number from 0 to 127 - names like C1 or D#2 are a way of writing that same
+  // number, not a different kind of message - so these are named after the
+  // number they send, exactly like the CC keys above. QMK's built-in MI_* keys
+  // are named by letter and depend on a separate octave setting, which makes
+  // the keymap say nothing useful about what a DAW will see.
+  //
+  // 36 is the bottom of a standard drum rack, and the range stops well clear of
+  // 20-31 and 102-116. That matters: midi_noteon_in() reads an incoming note
+  // number through cc_index_for(), so notes inside those ranges would light the
+  // CC keys by mistake. Keep NT_36 first and NT_51 last - process_record_user()
+  // relies on the block being contiguous and in ascending order.
+  NT_36, NT_37, NT_38, NT_39, NT_40, NT_41, NT_42, NT_43,
+  NT_44, NT_45, NT_46, NT_47, NT_48, NT_49, NT_50, NT_51,
+  // Shift the whole note grid by an octave. Must stay outside the block above,
+  // which is range checked. QMK's MI_OCTU / MI_OCTD are no use here: they move
+  // midi_config.octave, which only the MI_* keycodes read.
+  NT_OCTD, NT_OCTU,
 };
 
 // The 27 CC_* keycodes are contiguous, so a keycode doubles as an index:
@@ -61,6 +79,22 @@ static uint8_t cc_number_for(uint16_t keycode) {
   uint8_t i = keycode - CC_20;
   return (i < 12) ? 20 + i : 102 + (i - 12);
 }
+
+// The note grid: NT_36 sends this number and each keycode after it adds one.
+#define NT_BASE 36
+#define NT_COUNT (NT_51 - NT_36 + 1)
+
+// The furthest the grid can shift and still keep every note inside 0-127.
+#define NT_OCT_MIN (-(NT_BASE / 12))
+#define NT_OCT_MAX ((127 - (NT_BASE + NT_COUNT - 1)) / 12)
+
+static int8_t nt_octave = 0;
+
+// The note each key is sounding, plus one, or 0 while the key is up. Storing it
+// makes the note off match the note on even when the octave moves mid-press.
+// Recalculating on release would send an unrelated note off and leave the first
+// note sounding in the DAW forever.
+static uint8_t nt_playing[NT_COUNT];
 
 const keypos_t PROGMEM hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   // When the swap hands key is pressed, the next key will be put into this function by it's position. See ../../rev5/rev5.h for the index of each key. Left hand is rows 0 to 4 and right is 5-9. For columns zero is on the outside of each side. This function then returns the index (but reversed, so col, row) of the key that should be returned when swap-hands is enabled. see docs for more information: https://github.com/qmk/qmk_firmware/blob/master/docs/feature_swap_hands.md
@@ -141,21 +175,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // five CC keys on the top row and six, six, seven and three below it. That is
   // 27 keys in 28 slots, an exact fit with nothing spare.
   //
-  // The right hand carries the Ableton letter shortcuts that used to be on the
-  // left, each one on the matching key of the other half. Note that the left
-  // thumbs are now all CC keys, so LOWER cannot be reached from this layer and
-  // neither can _ADJUST - leave with TO(0) first to get at the RGB controls.
+  // The right hand sends MIDI notes 36 to 51 as a 4x4 grid. It starts at NT_36
+  // on the M key and counts to the right, then steps up a row - so the grid
+  // rises from the bottom left, the same way a clip grid is usually drawn. The
+  // row 3 column offset is because that row carries an extra inner key, which
+  // puts M under J rather than under H.
+  //
+  // N shifts the grid down an octave and H shifts it up, between 12 below and
+  // 72 above the printed numbers.
+  //
+  // Notes and CCs are separate kinds of message, so these numbers cannot
+  // collide with the CC numbers on the left hand.
   [_ABLETON] = LAYOUT(
   //┌────────┬────────┬────────┬────────┬────────┬────────┐                          ┌────────┬────────┬────────┬────────┬────────┬────────┐
-       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,    KC_K,    KC_O,    KC_L, _______,  CC_CLR,
+       TO(0),   CC_20,   CC_21,   CC_22,   CC_23,   CC_24,                            _______,   NT_48,   NT_49,   NT_50,   NT_51,  CC_CLR,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,    KC_Y,    KC_H,    KC_U,    KC_J,  CC_DBG,
+       CC_25,   CC_26,   CC_27,   CC_28,   CC_29,   CC_30,                            _______,   NT_44,   NT_45,   NT_46,   NT_47,  CC_DBG,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            _______,    KC_D,    KC_F,    KC_T,    KC_G,    KC_X,
+       CC_31,  CC_102,  CC_103,  CC_104,  CC_105,  CC_106,                            NT_OCTU,   NT_40,   NT_41,   NT_42,   NT_43, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______,    KC_A,    KC_W,    KC_S,    KC_E,    KC_Z, _______,
+      CC_107,  CC_108,  CC_109,  CC_110,  CC_111,  CC_112,  CC_113,          _______, NT_OCTD,   NT_36,   NT_37,   NT_38,   NT_39, _______,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
-                                    CC_114,  CC_115,  CC_116,                   _______, _______, _______
+                                    CC_114, _______,  CC_115,                   _______, _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
   )
 };
@@ -191,6 +232,35 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // 127 on press and 0 on release, the same shape as MI_SUS, so Ableton can
     // MIDI map the key as either a momentary or a toggle control.
     midi_send_cc(&midi_device, midi_config.channel, cc_number_for(keycode), record->event.pressed ? 127 : 0);
+    return false;
+  }
+
+  if (keycode == NT_OCTD || keycode == NT_OCTU) {
+    if (record->event.pressed) {
+      // Held notes keep the number they started on, so shifting under your own
+      // fingers is safe. At either end the key simply does nothing.
+      int8_t next = nt_octave + (keycode == NT_OCTU ? 1 : -1);
+      if (next >= NT_OCT_MIN && next <= NT_OCT_MAX) {
+        nt_octave = next;
+      }
+    }
+    return false;
+  }
+
+  if (keycode >= NT_36 && keycode <= NT_51) {
+    uint8_t i = keycode - NT_36;
+    if (record->event.pressed) {
+      // Full velocity on press and a note off on release, so a DAW sees an
+      // ordinary held note. Velocity is fixed rather than taken from
+      // midi_config.velocity: nothing in this keymap changes that setting, and
+      // a constant makes what the DAW receives predictable.
+      uint8_t note = NT_BASE + i + nt_octave * 12;
+      nt_playing[i] = note + 1;
+      midi_send_noteon(&midi_device, midi_config.channel, note, 127);
+    } else if (nt_playing[i]) {
+      midi_send_noteoff(&midi_device, midi_config.channel, nt_playing[i] - 1, 0);
+      nt_playing[i] = 0;
+    }
     return false;
   }
 
